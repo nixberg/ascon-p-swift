@@ -69,6 +69,6 @@ extension UInt64 {
     
     @inline(__always)
     private func rotated(right count: Int) -> Self {
-        (self &<< (Self.bitWidth - count)) | (self &>> count)
+        self << (Self.bitWidth - count) | self >> count
     }
 }
