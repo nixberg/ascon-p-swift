@@ -107,9 +107,9 @@ extension State {
     }
 }
 
-private extension UnsafeMutableBufferPointer {
+extension UnsafeMutableBufferPointer {
     @inline(__always)
-    static func == (lhs: Self, rhs: Self) -> Bool {
+    fileprivate static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.baseAddress == rhs.baseAddress && lhs.count == rhs.count
     }
 }

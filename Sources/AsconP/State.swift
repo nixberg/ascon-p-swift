@@ -7,7 +7,7 @@ public struct State {
         self.lanes = lanes
     }
     
-    public mutating func permute(withRounds rounds: Int) {
+    public mutating func permute(rounds: Int) {
         precondition((0...12).contains(rounds))
         
         lanes.0 = UInt64(bigEndian: lanes.0)
@@ -16,9 +16,11 @@ public struct State {
         lanes.3 = UInt64(bigEndian: lanes.3)
         lanes.4 = UInt64(bigEndian: lanes.4)
         
-        stride(from: 0xf0 as UInt64, through: 0x4b, by: -0x0f).suffix(rounds).forEach {
+        stride(from: 0xf0 as UInt64, through: 0x4b, by: -0xf).suffix(rounds).forEach {
             lanes.2 ^= $0
+            
             self.substitute()
+            
             self.diffuse()
         }
         
@@ -35,13 +37,13 @@ public struct State {
         lanes.4 ^= lanes.3
         lanes.2 ^= lanes.1
         
-        let temps = (lanes.0, lanes.1)
-        
-        lanes.0 ^= ~lanes.1 & lanes.2
-        lanes.1 ^= ~lanes.2 & lanes.3
-        lanes.2 ^= ~lanes.3 & lanes.4
-        lanes.3 ^= ~lanes.4 & temps.0
-        lanes.4 ^= ~temps.0 & temps.1
+        lanes = (
+            lanes.0 ^ ~lanes.1 & lanes.2,
+            lanes.1 ^ ~lanes.2 & lanes.3,
+            lanes.2 ^ ~lanes.3 & lanes.4,
+            lanes.3 ^ ~lanes.4 & lanes.0,
+            lanes.4 ^ ~lanes.0 & lanes.1
+        )
         
         lanes.1 ^= lanes.0
         lanes.3 ^= lanes.2
@@ -53,16 +55,16 @@ public struct State {
     private mutating func diffuse() {
         lanes.0.diffuse(withRotations: 19, 28)
         lanes.1.diffuse(withRotations: 61, 39)
-        lanes.2.diffuse(withRotations:  1,  6)
+        lanes.2.diffuse(withRotations: 01, 06)
         lanes.3.diffuse(withRotations: 10, 17)
-        lanes.4.diffuse(withRotations:  7, 41)
+        lanes.4.diffuse(withRotations: 07, 41)
     }
 }
 
-private extension UInt64 {
+extension UInt64 {
     @inline(__always)
-    mutating func diffuse(withRotations a: Int, _ b: Int) {
-        self ^= self.rotated(right: a) ^ self.rotated(right: b)
+    fileprivate mutating func diffuse(withRotations r0: Int, _ r1: Int) {
+        self ^= self.rotated(right: r0) ^ self.rotated(right: r1)
     }
     
     @inline(__always)
